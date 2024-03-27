@@ -14,7 +14,7 @@ This repository is a collection of code examples and notes for learning Django R
 
 To get started with this repository, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/your-username/django-rest-framework-learning.git`
+1. Clone the repository: `git clone https://github.com/ahmarhafeez1/django-rest-framework-learning.git`
 2. Install the required dependencies: `pip install -r requirements.txt`
 3. Run the Django development server: `python manage.py runserver`
 
