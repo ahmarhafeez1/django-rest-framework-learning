@@ -1,30 +1,14 @@
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, APIView
 from posts.serializers import PostSerializer
 from posts.models import Post
 from django.shortcuts import get_object_or_404
 
 
 
-posts = [
-    {
-        "id": 1,
-        "title": "First Post",
-        "content": "This is the content of the first post."
-    },
-    {
-        "id": 2,
-        "title": "Second Post",
-        "content": "This is the content of the second post."
-    },
-    {
-        "id": 3,
-        "title": "Third Post",
-        "content": "This is the content of the third post."
-    }
-]
+
 
 def get_post_by_id(posts, post_id):
     for post in posts:
@@ -46,27 +30,64 @@ def homepage(request:Request):
 
 
 
-@api_view(http_method_names=['GET','POST'])
-def list_posts(request:Request):
-    if(request.method == 'POST'):
+class PostListCreateView(APIView):
+    serializer_class = PostSerializer
+
+    def get(self, request:Request, *args, **kwargs):
+        posts = Post.objects.all()
+        serializer = self.serializer_class(
+            instance=posts,
+            many=True
+            )
+        return Response(data = {
+            'Message': 'Post Created',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    
+    def post(self, request:Request, *args, **kwargs):
         data = request.data
-        serializer = PostSerializer(data=data)
+        serializer = self.serializer_class(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data,status=status.HTTP_200_OK)
+        return Response(data=serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+class PostRetrieveUpdateDeleteView(APIView):
+    seriazlier_class = PostSerializer
+
+    def get(self, request:Request, post_id: int):
+        post = get_object_or_404(Post,pk=post_id)
+        serializer = self.seriazlier_class(instance=post)
+        return Response(data = serializer.data, status= status.HTTP_200_OK)
+    
+    def put(self, request:Request, post_id: int):
+        post = get_object_or_404(Post,pk=post_id)
+        data = request.data
+
+        serializer = self.seriazlier_class(instance=post,data = data)
         if serializer.is_valid():
             serializer.save()
             return Response(data={
-                'message': 'Post Created',
-                'data': serializer.data,
-            },
-            status=status.HTTP_201_CREATED
+                'message': 'Post Updated',
+                'data': serializer.data
+            }, status = status.HTTP_200_OK
             )
         return Response(data=serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-        
-    posts = Post.objects.all()
-    serializer = PostSerializer(
-        instance = posts, 
-        many = True
-        )
-    return Response(data=serializer.data,status=status.HTTP_200_OK)
+    
+    def delete(self, request:Request, post_id: int):
+        post = get_object_or_404(Post,pk=post_id)
+        post.delete()
+        return Response(data={
+            'message': "Post Deleted",
+            },
+            status= status.HTTP_204_NO_CONTENT
+            )
+
 
 @api_view(http_method_names=['GET'])
 def post_details(request:Request,post_id:int):
